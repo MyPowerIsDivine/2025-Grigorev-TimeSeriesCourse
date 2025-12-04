@@ -3,7 +3,6 @@ import pandas as pd
 import math
 import cv2
 import imutils
-from google.colab.patches import cv2_imshow
 
 
 class Image2TimeSeries:
@@ -22,17 +21,20 @@ class Image2TimeSeries:
     def _img_preprocess(self, img: np.ndarray) -> np.ndarray:
         """
         Preprocess the raw image: convert to grayscale, inverse, blur slightly, and threshold it
-        
-        Parameters
-        ----------
-        img: raw image
-        
-        Returns
-        -------
-        prep_img: image after preprocessing
         """
-
-        # INSERT YOUR CODE
+        # Шаг 1. Преобразование в оттенки серого
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Шаг 2. Инверсия цвета
+        # Это нужно, чтобы объект стал белым, а фон черным
+        inverted = cv2.bitwise_not(gray)
+        
+        # Шаг 3. Размытие изображения для удаления шума
+        # Используем Гауссово размытие с ядром (5, 5)
+        blurred = cv2.GaussianBlur(inverted, (5, 5), 0)
+        
+        # Шаг 4. Бинаризация (преобразование в черно-белое)
+        _, prep_img = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY)
 
         return prep_img
 
@@ -164,7 +166,9 @@ class Image2TimeSeries:
         for i in range(len(edge_coordinates)):
             cv2.drawContours(img, np.array([[center, edge_coordinates[i]]]), -1, (255, 0, 255), 4)
 
-        cv2_imshow(imutils.resize(img, width=200))
+        cv2.imshow("Contour Visualization", imutils.resize(img, width=200))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
     def convert(self, img: np.ndarray, is_visualize: bool = False) -> np.ndarray:
@@ -192,7 +196,6 @@ class Image2TimeSeries:
             self._img_show(img.copy(), contour, edge_coordinates, center)
 
         for coord in edge_coordinates:
-            #dist = math.sqrt((coord[0] - center[0])**2 + (coord[1] - center[1])**2)
             dist = math.fabs(coord[0] - center[0]) + math.fabs(coord[1] - center[1])
             ts.append(dist)
 

@@ -1,74 +1,68 @@
 import numpy as np
-
-from modules.metrics import ED_distance, norm_ED_distance, DTW_distance
+from modules.metrics import ED_distance, DTW_distance, norm_ED_distance
 from modules.utils import z_normalize
-
 
 class PairwiseDistance:
     """
-    Distance matrix between time series 
-
-    Parameters
+    Класс для вычисления матрицы расстояний между временными рядами.
+    
+    Параметры
     ----------
-    metric: distance metric between two time series
-            Options: {euclidean, dtw}
-    is_normalize: normalize or not time series
+    metric: str, default='euclidean'
+        Название метрики расстояния. Доступные опции: {'euclidean', 'dtw'}.
+    is_normalize: bool, default=False
+        Выполнять ли Z-нормализацию временных рядов перед вычислением расстояний.
     """
-
     def __init__(self, metric: str = 'euclidean', is_normalize: bool = False) -> None:
-
         self.metric: str = metric
         self.is_normalize: bool = is_normalize
     
-
     @property
     def distance_metric(self) -> str:
-        """Return the distance metric
-
-        Returns
-        -------
-            string with metric which is used to calculate distances between set of time series
-        """
-
-        norm_str = ""
-        if (self.is_normalize):
-            norm_str = "normalized "
-        else:
-            norm_str = "non-normalized "
-
+        """Возвращает описание используемой метрики расстояния."""
+        norm_str = "normalized " if self.is_normalize else "non-normalized "
         return norm_str + self.metric + " distance"
 
-
     def _choose_distance(self):
-        """ Choose distance function for calculation of matrix
-        
-        Returns
-        -------
-        dict_func: function reference
         """
-
-        dist_func = None
-
-        # INSERT YOUR CODE
-
-        return dist_func
-
+        Выбирает функцию для вычисления расстояния на основе self.metric и self.is_normalize.
+        """
+        if self.metric == 'euclidean':
+            if self.is_normalize:
+                return norm_ED_distance
+            return ED_distance
+            
+        elif self.metric == 'dtw':
+            return DTW_distance
+        else:
+            raise ValueError(f"Unknown metric: '{self.metric}'. Available options: 'euclidean', 'dtw'.")
 
     def calculate(self, input_data: np.ndarray) -> np.ndarray:
-        """ Calculate distance matrix
-        
-        Parameters
-        ----------
-        input_data: time series set
-        
-        Returns
-        -------
-        matrix_values: distance matrix
+        """
+        Вычисляет матрицу расстояний для набора временных рядов.
         """
         
-        matrix_shape = (input_data.shape[0], input_data.shape[0])
-        matrix_values = np.zeros(shape=matrix_shape)
+        n = input_data.shape[0]
+        matrix_values = np.zeros((n, n))
         
-        # INSERT YOUR CODE
-
+        data_to_process = input_data.copy()
+        
+        # ЛОГИКА НОРМАЛИЗАЦИИ:
+        # 1. Если это евклидова метрика с нормализацией -> мы НЕ нормализуем данные здесь,
+        #    так как функция norm_ED_distance работает с сырыми данными (считает статистики внутри).
+        # 2. Если это любая другая метрика (DTW) с нормализацией -> нормализуем данные явно.
+        if self.is_normalize and self.metric != 'euclidean':
+            for i in range(n):
+                data_to_process[i] = z_normalize(data_to_process[i])
+        
+        # Выбираем функцию расчета
+        dist_func = self._choose_distance()
+        
+        # Вычисление расстояний
+        for i in range(n):
+            for j in range(i + 1, n):
+                dist = dist_func(data_to_process[i], data_to_process[j])
+                matrix_values[i, j] = dist
+                matrix_values[j, i] = dist 
+                
         return matrix_values

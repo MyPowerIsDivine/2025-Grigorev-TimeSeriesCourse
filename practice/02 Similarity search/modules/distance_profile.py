@@ -25,6 +25,23 @@ def brute_force(ts: np.ndarray, query: np.ndarray, is_normalize: bool = True) ->
 
     dist_profile = np.zeros(shape=(N,))
 
-    # INSERT YOUR CODE
+    # 1. Если требуется нормализация, нормализуем запрос один раз
+    if is_normalize:
+        query = z_normalize(query)
+
+    # 2. Проходим скользящим окном по временному ряду
+    for i in range(N):
+        # Выделяем подпоследовательность
+        subsequence = ts[i : i + m]
+        
+        # Если требуется, нормализуем подпоследовательность
+        if is_normalize:
+            subsequence = z_normalize(subsequence)
+            
+        # Считаем Евклидово расстояние
+        dist = ED_distance(query, subsequence)
+        
+        # Сохраняем в профиль расстояний
+        dist_profile[i] = dist
 
     return dist_profile

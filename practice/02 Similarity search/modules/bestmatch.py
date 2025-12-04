@@ -154,7 +154,29 @@ class NaiveBestMatchFinder(BestMatchFinder):
             'distance' : []
         }
         
-        # INSERT YOUR CODE
+        if self.is_normalize:
+            query = z_normalize(query)
+
+        # 2. Проходим по всем подпоследовательностям
+        # ts_data здесь уже преобразован в матрицу (N, m) благодаря коду выше (sliding_window)
+        for i in range(N):
+            # Извлекаем i-ю подпоследовательность
+            subseq = ts_data[i]
+
+            # Нормализуем подпоследовательность, если требуется
+            if self.is_normalize:
+                subseq = z_normalize(subseq)
+
+            # Вычисляем DTW расстояние с ограничением полосы self.r
+            # Используем функцию, которую реализовали в metrics.py
+            dist = DTW_distance(query, subseq, self.r)
+
+            # Сохраняем расстояние в профиль
+            dist_profile[i] = dist
+
+        # 3. Находим Top-K совпадений с учетом зоны исключения
+        # Функция topK_match уже импортирована и определена выше
+        bestmatch = topK_match(dist_profile, excl_zone, self.topK)
 
         return bestmatch
 

@@ -56,17 +56,23 @@ class TimeSeriesHierarchicalClustering:
     def fit(self, distance_matrix: np.ndarray) -> Self:
         """
         Fit the agglomerative clustering model based on distance matrix
-
-        Parameters
-        ----------
-        distance_matrix: distance matrix between instances of dataset with shape (ts_number, ts_number)
-        
-        Returns
-        -------
-        self: the fitted model
         """
+        # Инициализируем модель. 
+        self.model = AgglomerativeClustering(
+            n_clusters=self.n_clusters,
+            metric='precomputed', 
+            linkage=self.method,
+            compute_distances=True
+        )
 
-       # INSERT YOUR CODE
+        # Обучаем модель на матрице расстояний
+        self.model.fit(distance_matrix)
+
+        # Сохраняем полученные метки классов
+        self.labels_ = self.model.labels_
+
+        # Генерируем матрицу связей для отрисовки дендрограммы
+        self.linkage_matrix = self._create_linkage_matrix()
 
         return self
 
@@ -107,14 +113,12 @@ class TimeSeriesHierarchicalClustering:
         margin = 7
 
         max_cluster = len(leaves)
-        # flip leaves, as gridspec iterates from top down
         leaves = leaves[::-1]
 
         for cnt in range(len(leaves)):
             plt.subplot(gs[cnt:cnt+1, max_cluster-ts_hspace:max_cluster])
             plt.axis("off")
 
-            # get leafnode name, which corresponds to original data index
             leafnode = leaves[cnt]
             ts = dx[leafnode]
             ts_len = ts.shape[0] - 1
@@ -142,11 +146,8 @@ class TimeSeriesHierarchicalClustering:
 
         plt.figure(figsize=(12, 9))
 
-        # define gridspec space
         gs = gridspec.GridSpec(max_cluster, max_cluster)
 
-        # add dendrogram to gridspec
-        # add -1 to give timeseries graphs more space
         plt.subplot(gs[:, 0 : max_cluster - ts_hspace - 1])
         plt.xlabel("Distance")
         plt.ylabel("Cluster")

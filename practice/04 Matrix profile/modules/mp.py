@@ -23,7 +23,12 @@ def compute_mp(ts1: np.ndarray, m: int, exclusion_zone: int = None, ts2: np.ndar
             (matrix profile, matrix profile index, subsequence length, exclusion zone, the first and second time series)
     """
     
-    # INSERT YOUR CODE
+    
+    ts1 = ts1.astype(np.float64)
+    if ts2 is not None:
+        ts2 = ts2.astype(np.float64)
+    
+    mp = stumpy.stump(ts1, m, ts2)
 
     return {'mp': mp[:, 0],
             'mpi': mp[:, 1],
